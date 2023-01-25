@@ -1,0 +1,304 @@
+{{- $gridgain := .Values.gridgain }}
+{{- $replicaCount := int $gridgain.replicaCount }}
+apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
+kind: StatefulSet
+metadata:
+  name: {{ include "gridgain.fullname" . }}
+  namespace: {{ include "gridgain.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: gridgain
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+    {{- if $gridgain.labels }}
+    {{- include "common.tplvalues.render" (dict "value" $gridgain.labels "context" $) | nindent 4 }}
+    {{- end }}
+  {{- if or $gridgain.annotations .Values.commonAnnotations }}
+  annotations:
+    {{- if $gridgain.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" $gridgain.annotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  serviceName: {{ include "gridgain.service.nameOverride" . }}
+  podManagementPolicy: {{ $gridgain.podManagementPolicy }}
+  replicas: {{ $replicaCount }}
+  {{- if $gridgain.updateStrategy }}
+  updateStrategy: {{- toYaml $gridgain.updateStrategy | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+      app.kubernetes.io/component: gridgain
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" . | nindent 8 }}
+        app.kubernetes.io/component: gridgain
+        {{- if $gridgain.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" $gridgain.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+      {{- if $gridgain.podAnnotations }}
+      annotations:
+#        {{- if (include "gridgain.createConfigmap" .) }}
+#        checksum/configuration: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+#        {{- end }}
+        {{- if $gridgain.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" $gridgain.podAnnotations "context" $) | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- include "gridgain.imagePullSecrets" . | nindent 6 }}
+      {{- if $gridgain.schedulerName }}
+      schedulerName: {{ $gridgain.schedulerName | quote }}
+      {{- end }}
+      serviceAccountName: {{ template "gridgain.serviceAccountName" . }}
+      {{- if $gridgain.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" $gridgain.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if $gridgain.affinity }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" $gridgain.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" $gridgain.podAffinityPreset "component" "gridgain" "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" $gridgain.podAntiAffinityPreset "component" "gridgain" "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" $gridgain.nodeAffinityPreset.type "key" $gridgain.nodeAffinityPreset.key "values" $gridgain.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if $gridgain.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" (dict "value" $gridgain.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if $gridgain.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" $gridgain.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if $gridgain.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" $gridgain.topologySpreadConstraints "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if $gridgain.priorityClassName }}
+      priorityClassName: {{ $gridgain.priorityClassName }}
+      {{- end }}
+      {{- if $gridgain.runtimeClassName }}
+      runtimeClassName: {{ $gridgain.runtimeClassName }}
+      {{- end }}
+      {{- if $gridgain.podSecurityContext.enabled }}
+      securityContext: {{- omit $gridgain.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{ if $gridgain.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $gridgain.terminationGracePeriodSeconds }}
+      {{- end }}
+      initContainers:
+        {{- if $gridgain.initContainers }}
+        {{- include "common.tplvalues.render" (dict "value" $gridgain.initContainers "context" $) | nindent 8 }}
+        {{- end }}
+        - name: enable-control-center-agent
+          image: {{ include "gridgain.image" . }}
+          imagePullPolicy: {{ $gridgain.image.pullPolicy | quote }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              cp -rf ${IGNITE_HOME}/libs/* /mnt/libs/
+              {{- if $gridgain.controlCenterAgent.enabled }}
+              cp -rf ${IGNITE_HOME}/libs/optional/control-center-agent /mnt/libs/
+              {{- end }}
+          volumeMounts:
+            - name: gridgain-libs
+              mountPath: /mnt/libs
+        {{- if and $gridgain.volumePermissions.enabled $gridgain.persistence.enabled }}
+        - name: volume-permissions
+          image: {{ include "gridgain.volumePermissions.image" . }}
+          imagePullPolicy: {{ $gridgain.volumePermissions.image.pullPolicy | quote }}
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              mkdir -p {{ printf "%s/%s" $gridgain.persistence.mountPath (default "" $gridgain.persistence.subPath) }}
+              chown {{ $gridgain.containerSecurityContext.runAsUser }}:{{ $gridgain.podSecurityContext.fsGroup }} {{ printf "%s/%s" $gridgain.persistence.mountPath (default "" $gridgain.persistence.subPath) }}
+              find  {{ printf "%s/%s" $gridgain.persistence.mountPath (default "" $gridgain.persistence.subPath) }} -mindepth 1 -maxdepth 1 -not -name ".snapshot" -not -name "lost+found" | xargs -r chown -R {{ $gridgain.containerSecurityContext.runAsUser }}:{{ $gridgain.podSecurityContext.fsGroup }}
+          {{- if eq ( toString ( $gridgain.volumePermissions.securityContext.runAsUser )) "auto" }}
+          securityContext: {{- omit $gridgain.volumePermissions.securityContext "runAsUser" | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext: {{- $gridgain.volumePermissions.securityContext | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $gridgain.volumePermissions.resources }}
+          resources: {{- toYaml $gridgain.volumePermissions.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ $gridgain.persistence.mountPath }}
+        {{- end }}
+      containers:
+        - name: gridgain
+          image: {{ include "gridgain.image" . }}
+          imagePullPolicy: {{ $gridgain.image.pullPolicy | quote }}
+          {{- if $gridgain.containerSecurityContext.enabled }}
+          securityContext: {{- omit $gridgain.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $gridgain.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" $gridgain.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if $gridgain.command }}
+          command: {{- include "common.tplvalues.render" (dict "value" $gridgain.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if $gridgain.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" $gridgain.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if $gridgain.args }}
+          args: {{- include "common.tplvalues.render" (dict "value" $gridgain.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if $gridgain.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" $gridgain.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          env:
+            - name: OPTION_LIBS
+              value: ignite-kubernetes,ignite-rest-http
+            - name: CONFIG_URI
+              value: file:///config/node-configuration/node-configuration.xml
+            {{- if $gridgain.license.xml }}
+            - name: LICENSE_URI
+              value: file:///config/license/gridgain-license.xml
+            {{- else if $gridgain.license.url }}
+            - name: LICENSE_URI
+              value: {{ $gridgain.license.url | quote }}
+            {{- end }}
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MY_POD_HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- if $gridgain.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" $gridgain.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if or $gridgain.extraEnvVarsCM $gridgain.extraEnvVarsSecret }}
+          envFrom:
+            {{- if $gridgain.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ tpl $gridgain.extraEnvVarsCM . | quote }}
+            {{- end }}
+            {{- if $gridgain.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ tpl $gridgain.extraEnvVarsSecret . | quote }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: spi
+              containerPort: 47100 # communication SPI port
+            - name: discovery
+              containerPort: 47500 # discovery SPI port
+            - name: jmx
+              containerPort: 49112 # JMX port
+            - name: thinclients
+              containerPort: 10800 # thin clients/JDBC driver port
+            - name: rest
+              containerPort: 8080 # REST API
+          {{- if not $gridgain.diagnosticMode.enabled }}
+          {{- if $gridgain.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" $gridgain.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else if $gridgain.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit $gridgain.livenessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /ignite?cmd=version
+              port: rest
+              scheme: HTTP
+          {{- end }}
+          {{- if $gridgain.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" $gridgain.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else if $gridgain.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit $gridgain.readinessProbe "enabled") "context" $) | nindent 12 }}
+            httpGet:
+              path: /ignite?cmd=probe
+              port: rest
+              scheme: HTTP
+          {{- end }}
+          {{- if $gridgain.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" $gridgain.customStartupProbe "context" $) | nindent 12 }}
+          {{- else if $gridgain.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit $gridgain.startupProbe "enabled") "context" $) | nindent 12 }}
+            exec:
+              command:
+                - /bitnami/scripts/startup-probe.sh
+          {{- end }}
+          {{- end }}
+          {{- if $gridgain.resources }}
+          resources: {{- toYaml $gridgain.resources | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: gridgain-libs
+              mountPath: /opt/gridgain/libs/
+            - name: node-configuration
+              mountPath: "/config/node-configuration"
+            {{- if $gridgain.license.xml }}
+            - name: license
+              mountPath: "/config/license"
+            {{- end }}
+            {{- if $gridgain.persistence.enabled }}
+            - name: data
+              mountPath: {{ $gridgain.persistence.mountPath }}
+              subPath: {{ $gridgain.persistence.subPath }}
+            {{- end }}
+            {{- if or $gridgain.configuration $gridgain.existingConfigmap }}
+            - name: config
+              mountPath: /opt/bitnami/gridgain/conf/gridgain.conf
+              subPath: gridgain.conf
+            {{- end }}
+            {{- if $gridgain.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" (dict "value" $gridgain.extraVolumeMounts "context" $) | nindent 12 }}
+            {{- end }}
+        {{- if $gridgain.sidecars }}
+        {{- include "common.tplvalues.render" (dict "value" $gridgain.sidecars "context" $) | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: gridgain-libs
+          emptyDir: {}
+        - name: node-configuration
+          configMap:
+            name: "{{ include "gridgain.fullname" . }}-node-config"
+        {{- if $gridgain.license.xml }}
+        - name: license
+          configMap:
+            name: "{{ include "gridgain.fullname" . }}-license"
+        {{- end }}
+        {{- if $gridgain.extraVolumes }}
+        {{- include "common.tplvalues.render" (dict "value" $gridgain.extraVolumes "context" $) | nindent 8 }}
+        {{- end }}
+  {{- if not $gridgain.persistence.enabled }}
+        - name: data
+          {{- if $gridgain.persistence.medium }}
+          emptyDir:
+            medium: {{ $gridgain.persistence.medium | quote }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+  {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        {{- if $gridgain.persistence.annotations }}
+        annotations: {{- include "common.tplvalues.render" (dict "value" $gridgain.persistence.annotations "context" $) | nindent 10 }}
+        {{- end }}
+      spec:
+        accessModes:
+        {{- range $gridgain.persistence.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $gridgain.persistence.size | quote }}
+            {{- if $gridgain.persistence.volumeClaimTemplates.requests }}
+            {{- include "common.tplvalues.render" (dict "value" $gridgain.persistence.volumeClaimTemplates.requests "context" $) | nindent 12 }}
+            {{- end }}
+        {{- if $gridgain.persistence.volumeClaimTemplates.dataSource }}
+        dataSource: {{- include "common.tplvalues.render" (dict "value" $gridgain.persistence.volumeClaimTemplates.dataSource "context" $) | nindent 10 }}
+        {{- end }}
+        {{- if $gridgain.persistence.volumeClaimTemplates.selector }}
+        selector: {{- include "common.tplvalues.render" (dict "value" $gridgain.persistence.volumeClaimTemplates.selector "context" $) | nindent 10 }}
+        {{- end }}
+        {{ include "common.storage.class" (dict "persistence" $gridgain.persistence "global" $gridgain.global) }}
+  {{- end }}

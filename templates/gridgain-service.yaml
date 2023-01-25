@@ -1,0 +1,53 @@
+{{- $gridgain := .Values.gridgain -}}
+{{- $fullName := include "common.names.fullname" . -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: gridgain
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if or $gridgain.service.annotations .Values.commonAnnotations }}
+  annotations:
+    {{- if $gridgain.service.annotations }}
+    {{- include "common.tplvalues.render" ( dict "value" $gridgain.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ $gridgain.service.type }}
+  {{- if and $gridgain.service.clusterIP (eq $gridgain.service.type "ClusterIP") }}
+  clusterIP: {{ $gridgain.service.clusterIP }}
+  {{- end }}
+  {{- if $gridgain.service.sessionAffinity }}
+  sessionAffinity: {{ $gridgain.service.sessionAffinity }}
+  {{- end }}
+  {{- if $gridgain.service.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" $gridgain.service.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if or (eq $gridgain.service.type "LoadBalancer") (eq $gridgain.service.type "NodePort") }}
+  externalTrafficPolicy: {{ $gridgain.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq $gridgain.service.type "LoadBalancer") (not (empty $gridgain.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ $gridgain.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq $gridgain.service.type "LoadBalancer") (not (empty $gridgain.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ $gridgain.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - name: rest
+      port: 8080
+      targetPort: rest
+    - name: thinclients
+      port: 10800
+      targetPort: thinclients
+    {{- if $gridgain.service.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" $gridgain.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{- include "common.labels.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: gridgain

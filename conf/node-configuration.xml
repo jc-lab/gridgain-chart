@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean class="org.apache.ignite.configuration.IgniteConfiguration">
+        <property name="dataStorageConfiguration">
+            <bean class="org.apache.ignite.configuration.DataStorageConfiguration">
+                <property name="defaultDataRegionConfiguration">
+                    <bean class="org.apache.ignite.configuration.DataRegionConfiguration">
+                        <property name="persistenceEnabled" value="true"/>
+                    </bean>
+                </property>
+                <property name="walMode" value="{{ .Values.gridgain.walMode }}"/>
+            </bean>
+        </property>
+        <property name="discoverySpi">
+            <bean class="org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi">
+                <property name="ipFinder">
+                    <bean class="org.apache.ignite.spi.discovery.tcp.ipfinder.kubernetes.TcpDiscoveryKubernetesIpFinder">
+                        <property name="namespace" value="{{ include "gridgain.namespace" . }}"/>
+                        <property name="serviceName" value="{{ include "gridgain.fullname" . }}"/>
+                    </bean>
+                </property>
+            </bean>
+        </property>
+        <property name="metricsUpdateFrequency" value="1000"/>
+        <property name="metricExporterSpi">
+            <list>
+                <bean class="org.apache.ignite.spi.metric.opencensus.OpenCensusMetricExporterSpi">
+                    <property name="period" value="1000" />
+                </bean>
+            </list>
+        </property>
+    </bean>
+</beans>

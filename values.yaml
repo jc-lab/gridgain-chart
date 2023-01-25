@@ -1,0 +1,522 @@
+global:
+  clusterDomain: cluster.local
+
+## Enable diagnostic mode in the deployment
+##
+diagnosticMode:
+  ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+  ##
+  enabled: false
+  ## @param diagnosticMode.command Command to override all containers in the deployment
+  ##
+  command:
+    - sleep
+  ## @param diagnosticMode.args Args to override all containers in the deployment
+  ##
+  args:
+    - infinity
+
+## @section Common parameters
+
+## @param kubeVersion Override Kubernetes version
+##
+kubeVersion: ""
+## @param nameOverride String to partially override common.names.name
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override common.names.fullname
+##
+fullnameOverride: ""
+## @param namespaceOverride String to fully override common.names.namespace
+##
+namespaceOverride: ""
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels: {}
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: {}
+## @param clusterDomain Kubernetes cluster domain name
+##
+clusterDomain: cluster.local
+## @param extraDeploy Array of extra objects to deploy with the release
+##
+extraDeploy: []
+
+## ServiceAccount
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+##
+serviceAccount:
+  ## @param serviceAccount.create Enable creation of ServiceAccount for ZooKeeper pod
+  ##
+  create: true
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.fullname template
+  ##
+  name: ""
+  ## @param serviceAccount.automountServiceAccountToken Allows auto mount of ServiceAccountToken on the serviceAccount created
+  ## Can be set to false if pods using this serviceAccount do not need to use K8s API
+  ##
+  automountServiceAccountToken: true
+  ## @param serviceAccount.annotations Additional custom annotations for the ServiceAccount
+  ##
+  annotations: {}
+## Role Based Access
+## ref: https://kubernetes.io/docs/admin/authorization/rbac/
+##
+rbac:
+  ## @param rbac.create Whether to create & use RBAC resources or not
+  ## binding GridGain(&reg;) ServiceAccount to a role
+  ## that allows GridGain(&reg;) pods querying the K8s API
+  ## this needs to be set to 'true' to enable the mongo-labeler sidecar primary GridGain discovery
+  ##
+  create: true
+  ## @param rbac.rules Custom rules to create following the role specification
+  ## The example below needs to be uncommented to use the 'mongo-labeler' sidecar for dynamic discovery of the primary GridGain pod:
+  ## rules:
+  ##   - apiGroups:
+  ##       - ""
+  ##     resources:
+  ##       - pods
+  ##     verbs:
+  ##       - get
+  ##       - list
+  ##       - watch
+  ##       - update
+  ##
+  rules: []
+
+gridgain:
+  image:
+    registry: docker.io
+    repository: gridgain/community
+    tag: "8.8.24"
+    digest: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+    debug: false
+
+  ## Enable diagnostic mode in the deployment
+  ##
+  diagnosticMode:
+    ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+    ##
+    enabled: false
+    ## @param diagnosticMode.command Command to override all containers in the deployment
+    ##
+    command:
+      - sleep
+    ## @param diagnosticMode.args Args to override all containers in the deployment
+    ##
+    args:
+      - infinity
+
+  ## @param replicaCount Number of main replicas to deploy
+  ##
+  replicaCount: 3
+
+  walMode: "NONE"
+
+  controlCenterAgent:
+    enabled: false
+
+  ## Configure extra options for main containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param livenessProbe.enabled Enable livenessProbe on main containers
+  ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+  ## @param readinessProbe.enabled Enable readinessProbe on main containers
+  ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: false
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+  ## @param startupProbe.enabled Enable startupProbe on main containers
+  ## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: foo
+    periodSeconds: bar
+    timeoutSeconds: foo
+    failureThreshold: bar
+    successThreshold: foo
+  ## @param customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: { }
+  ## @param customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: { }
+  ## @param customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: { }
+  ## main resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param resources.limits The resources limits for the main containers
+  ## @param resources.requests The requested resources for the main containers
+  ##
+  resources:
+    limits: {}
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param podSecurityContext.enabled Enabled main pods' Security Context
+  ## @param podSecurityContext.fsGroup Set main pod's Security Context fsGroup
+  ##
+  podSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+  ## Configure Container Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## @param containerSecurityContext.enabled Enabled main containers' Security Context
+  ## @param containerSecurityContext.runAsUser Set main containers' Security Context runAsUser
+  ## @param containerSecurityContext.runAsNonRoot Set main containers' Security Context runAsNonRoot
+  ## @param containerSecurityContext.readOnlyRootFilesystem Set main containers' Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+    readOnlyRootFilesystem: false
+
+  ## @param existingConfigmap The name of an existing ConfigMap with your custom configuration for main
+  ##
+  existingConfigmap:
+  ## @param command Override default container command (useful when using custom images)
+  ##
+  command: [ ]
+  ## @param args Override default container args (useful when using custom images)
+  ##
+  args: [ ]
+  ## @param hostAliases main pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: [ ]
+  ## @param podLabels Extra labels for main pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: { }
+  ## @param podAnnotations Annotations for main pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: { }
+  ## Pod Disruption Budget configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb
+  ## @param pdb.create Enable/disable a Pod Disruption Budget creation
+  ## @param pdb.minAvailable Minimum number/percentage of pods that should remain scheduled
+  ## @param pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
+  ##
+  pdb:
+    create: false
+    minAvailable: 1
+    maxUnavailable: ""
+  ## Autoscaling configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+  ## @param autoscaling.enabled Enable autoscaling for notificationService
+  ## @param autoscaling.minReplicas Minimum number of notificationService replicas
+  ## @param autoscaling.maxReplicas Maximum number of notificationService replicas
+  ## @param autoscaling.targetCPU Target CPU utilization percentage
+  ## @param autoscaling.targetMemory Target Memory utilization percentage
+  ##
+  autoscaling:
+    enabled: false
+    minReplicas: ""
+    maxReplicas: ""
+    targetCPU: ""
+    targetMemory: ""
+  ## Node affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param nodeAffinityPreset.type GridGain(&reg;) Node affinity preset type. Ignored if `affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param nodeAffinityPreset.key GridGain(&reg;) Node label key to match Ignored if `affinity` is set.
+    ## E.g.
+    ## key: "kubernetes.io/e2e-az-name"
+    ##
+    key: ""
+    ## @param nodeAffinityPreset.values GridGain(&reg;) Node label values to match. Ignored if `affinity` is set.
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: [ ]
+  ## @param affinity Affinity for main pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `podAffinityPreset`, `podAntiAffinityPreset`, and `nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param nodeSelector Node labels for main pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: { }
+  ## @param tolerations Tolerations for main pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: [ ]
+  ## @param updateStrategy.type main statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+
+  ## ONLY FOR STATEFULSETS
+  ## @param podManagementPolicy Statefulset Pod management policy, it needs to be Parallel to be able to complete the cluster join
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies
+  ##
+  podManagementPolicy: OrderedReady
+
+  ## @param priorityClassName main pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  ##
+  topologySpreadConstraints: [ ]
+  ## @param schedulerName Name of the k8s scheduler (other than default) for main pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param terminationGracePeriodSeconds Seconds Redmine pod needs to terminate gracefully
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
+  ##
+  terminationGracePeriodSeconds: ""
+  ## @param lifecycleHooks for the main container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: { }
+  ## @param extraEnvVars Array with extra environment variables to add to main nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: [ ]
+  ## @param extraEnvVarsCM Name of existing ConfigMap containing extra env vars for main nodes
+  ##
+  extraEnvVarsCM: ""
+  ## @param extraEnvVarsSecret Name of existing Secret containing extra env vars for main nodes
+  ##
+  extraEnvVarsSecret: ""
+  ## @param extraVolumes Optionally specify extra list of additional volumes for the main pod(s)
+  ##
+  extraVolumes: [ ]
+  ## @param extraVolumeMounts Optionally specify extra list of additional volumeMounts for the main container(s)
+  ##
+  extraVolumeMounts: [ ]
+  ## @param sidecars Add additional sidecar containers to the main pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: [ ]
+  ## @param initContainers Add additional init containers to the main pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: []
+
+  ## notificationService service parameters
+  ##
+  service:
+    ## @param service.type notificationService service type
+    ##
+    type: ClusterIP
+    ## @param service.clusterIP notificationService service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIP: ""
+    ## @param service.loadBalancerIP notificationService service Load Balancer IP
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+    ##
+    loadBalancerIP: ""
+    ## @param service.loadBalancerSourceRanges notificationService service Load Balancer sources
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ##   - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: [ ]
+    ## @param service.externalTrafficPolicy notificationService service external traffic policy
+    ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+    ## @param service.annotations Additional custom annotations for notificationService service
+    ##
+    annotations: { }
+    ## @param service.extraPorts Extra ports to expose in notificationService service (normally used with the `sidecars` value)
+    ##
+    extraPorts: [ ]
+    ## @param service.sessionAffinity Control where client requests go, to the same pod or round-robin
+    ## Values: ClientIP or None
+    ## ref: https://kubernetes.io/docs/user-guide/services/
+    ##
+    sessionAffinity: None
+    ## @param service.sessionAffinityConfig Additional settings for the sessionAffinity
+    ## sessionAffinityConfig:
+    ##   clientIP:
+    ##     timeoutSeconds: 300
+    ##
+    sessionAffinityConfig: { }
+  
+  ## @section Volume Permissions parameters
+  ##
+  ## Init Container parameters
+  ## Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component
+  ## values from the securityContext section of the component
+  ##
+  volumePermissions:
+    ## @param volumePermissions.enabled Enable init container that changes the owner and group of the persistent volume(s) mountpoint to `runAsUser:fsGroup`
+    ##
+    enabled: false
+    ## @param volumePermissions.image.registry Init container volume-permissions image registry
+    ## @param volumePermissions.image.repository Init container volume-permissions image repository
+    ## @param volumePermissions.image.tag Init container volume-permissions image tag (immutable tags are recommended)
+    ## @param volumePermissions.image.digest Init container volume-permissions image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag
+    ## @param volumePermissions.image.pullPolicy Init container volume-permissions image pull policy
+    ## @param volumePermissions.image.pullSecrets Specify docker-registry secret names as an array
+    ##
+    image:
+      registry: docker.io
+      repository: bitnami/bitnami-shell
+      tag: 11-debian-11-r37
+      digest: ""
+      ## Specify a imagePullPolicy
+      ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+      ## ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+      ##
+      pullPolicy: IfNotPresent
+      ## Optionally specify an array of imagePullSecrets (secrets must be manually created in the namespace)
+      ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+      ## Example:
+      ## pullSecrets:
+      ##   - myRegistryKeySecretName
+      ##
+      pullSecrets: []
+    ## Init Container resource requests and limits
+    ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+    ## We usually recommend not to specify default resources and to leave this as a conscious
+    ## choice for the user. This also increases chances charts run on environments with little
+    ## resources, such as Minikube. If you do want to specify resources, uncomment the following
+    ## lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    ## @param volumePermissions.resources.limits Init container volume-permissions resource limits
+    ## @param volumePermissions.resources.requests Init container volume-permissions resource requests
+    ##
+    resources:
+      ## Example:
+      ## limits:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      limits: {}
+      ## Examples:
+      ## requests:
+      ##    cpu: 100m
+      ##    memory: 128Mi
+      ##
+      requests: {}
+    ## Init container Security Context
+    ## Note: the chown of the data folder is done to containerSecurityContext.runAsUser
+    ## and not the below volumePermissions.securityContext.runAsUser
+    ## When runAsUser is set to special value "auto", init container will try to chwon the
+    ## data folder to autodetermined user&group, using commands: `id -u`:`id -G | cut -d" " -f2`
+    ## "auto" is especially useful for OpenShift which has scc with dynamic userids (and 0 is not allowed).
+    ## You may want to use this volumePermissions.securityContext.runAsUser="auto" in combination with
+    ## podSecurityContext.enabled=false,containerSecurityContext.enabled=false and shmVolume.chmod.enabled=false
+    ## @param volumePermissions.securityContext.runAsUser User ID for the volumePermissions container
+    ##
+    securityContext:
+      runAsUser: 0
+
+  persistence:
+    ## @param gridgain.persistence.enabled Enable hidden node data persistence using PVC
+    ##
+    enabled: true
+    ## @param gridgain.persistence.medium Provide a medium for `emptyDir` volumes.
+    ## Requires gridgain.persistence.enabled: false
+    ##
+    medium: ""
+    ## @param gridgain.persistence.storageClass PVC Storage Class for hidden node data volume
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ## set, choosing the default provisioner.
+    ##
+    storageClass: ""
+    ## @param gridgain.persistence.accessModes PV Access Mode
+    ##
+    accessModes:
+      - ReadWriteOnce
+    ## @param gridgain.persistence.size PVC Storage Request for hidden node data volume
+    ##
+    size: 8Gi
+    ## @param gridgain.persistence.annotations PVC annotations
+    ##
+    annotations: { }
+    ## @param gridgain.persistence.mountPath The path the volume will be mounted at, useful when using different GridGain(&reg;) images.
+    ##
+    mountPath: /opt/gridgain/work
+    ## @param gridgain.persistence.subPath The subdirectory of the volume to mount to, useful in dev environments
+    ## and one PV for multiple services.
+    ##
+    subPath: ""
+    ## Fine tuning for volumeClaimTemplates
+    ##
+    volumeClaimTemplates:
+      ## @param gridgain.persistence.volumeClaimTemplates.selector A label query over volumes to consider for binding (e.g. when using local volumes)
+      ## See https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#labelselector-v1-meta for more details
+      ##
+      selector: { }
+      ## @param gridgain.persistence.volumeClaimTemplates.requests Custom PVC requests attributes
+      ## Sometime cloud providers use additional requests attributes to provision custom storage instance
+      ## See https://cloud.ibm.com/docs/containers?topic=containers-file_storage#file_dynamic_statefulset
+      ##
+      requests: { }
+      ## @param gridgain.persistence.volumeClaimTemplates.dataSource Set volumeClaimTemplate dataSource
+      ##
+      dataSource: { }
+  
+  license:
+    url: ""
+    xml: ""
