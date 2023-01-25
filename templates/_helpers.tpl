@@ -19,8 +19,8 @@ If release name contains chart name it will be used as a full name.
 Create a default mongo service name which can be overridden.
 */}}
 {{- define "gridgain.service.nameOverride" -}}
-    {{- if and .Values.service .Values.service.nameOverride -}}
-        {{- print .Values.service.nameOverride -}}
+    {{- if and .Values.gridgain.service .Values.gridgain.service.nameOverride -}}
+        {{- print .Values.gridgain.service.nameOverride -}}
     {{- else -}}
         {{- printf "%s-headless" (include "gridgain.fullname" .) -}}
     {{- end }}
