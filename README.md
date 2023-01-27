@@ -1,2 +1,2 @@
-# oact-chart
+# gridgain-chart
 

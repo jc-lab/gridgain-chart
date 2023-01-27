@@ -68,11 +68,9 @@ rbac:
   ## @param rbac.create Whether to create & use RBAC resources or not
   ## binding GridGain(&reg;) ServiceAccount to a role
   ## that allows GridGain(&reg;) pods querying the K8s API
-  ## this needs to be set to 'true' to enable the mongo-labeler sidecar primary GridGain discovery
   ##
   create: true
   ## @param rbac.rules Custom rules to create following the role specification
-  ## The example below needs to be uncommented to use the 'mongo-labeler' sidecar for dynamic discovery of the primary GridGain pod:
   ## rules:
   ##   - apiGroups:
   ##       - ""
@@ -238,9 +236,9 @@ gridgain:
     maxUnavailable: ""
   ## Autoscaling configuration
   ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
-  ## @param autoscaling.enabled Enable autoscaling for notificationService
-  ## @param autoscaling.minReplicas Minimum number of notificationService replicas
-  ## @param autoscaling.maxReplicas Maximum number of notificationService replicas
+  ## @param autoscaling.enabled Enable autoscaling for gridgain
+  ## @param autoscaling.minReplicas Minimum number of gridgain replicas
+  ## @param autoscaling.maxReplicas Maximum number of gridgain replicas
   ## @param autoscaling.targetCPU Target CPU utilization percentage
   ## @param autoscaling.targetMemory Target Memory utilization percentage
   ##
@@ -356,38 +354,36 @@ gridgain:
   ##
   initContainers: []
 
-  ## notificationService service parameters
+  ## gridgain service parameters
   ##
   service:
-    ## @param service.type notificationService service type
-    ##
-    type: ClusterIP
-    ## @param service.clusterIP notificationService service Cluster IP
-    ## e.g.:
+    ## @param service.clusterIP gridgain(&reg;) service cluster IP (only for standalone architecture)
+    ## e.g:
     ## clusterIP: None
     ##
     clusterIP: ""
-    ## @param service.loadBalancerIP notificationService service Load Balancer IP
-    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+    ## @param service.externalIPs Specify the externalIP value ClusterIP service type (only for standalone architecture)
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips
+    ##
+    externalIPs: [ ]
+    ## @param service.loadBalancerIP loadBalancerIP for gridgain(&reg;) Service (only for standalone architecture)
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
     ##
     loadBalancerIP: ""
-    ## @param service.loadBalancerSourceRanges notificationService service Load Balancer sources
+    ## @param service.loadBalancerSourceRanges Address(es) that are allowed when service is LoadBalancer (only for standalone architecture)
     ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
-    ## e.g:
-    ## loadBalancerSourceRanges:
-    ##   - 10.10.10.0/24
     ##
     loadBalancerSourceRanges: [ ]
-    ## @param service.externalTrafficPolicy notificationService service external traffic policy
-    ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
-    ##
-    externalTrafficPolicy: Cluster
-    ## @param service.annotations Additional custom annotations for notificationService service
-    ##
-    annotations: { }
-    ## @param service.extraPorts Extra ports to expose in notificationService service (normally used with the `sidecars` value)
+    ## @param service.extraPorts Extra ports to expose (normally used with the `sidecar` value)
     ##
     extraPorts: [ ]
+    ## @param service.annotations Provide any additional annotations that may be required
+    ##
+    annotations: { }
+    ## @param service.externalTrafficPolicy service external traffic policy (only for standalone architecture)
+    ## ref https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Local
     ## @param service.sessionAffinity Control where client requests go, to the same pod or round-robin
     ## Values: ClientIP or None
     ## ref: https://kubernetes.io/docs/user-guide/services/
