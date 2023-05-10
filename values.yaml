@@ -524,7 +524,7 @@ autoActivate:
   image:
     registry: ghcr.io
     repository: jc-lab/gridgain-helper
-    tag: "0.0.1"
+    tag: "v0.0.3"
     digest: ""
     pullPolicy: IfNotPresent
     pullSecrets: [ ]
