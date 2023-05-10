@@ -88,7 +88,7 @@ gridgain:
   image:
     registry: docker.io
     repository: gridgain/community
-    tag: "8.8.24"
+    tag: "8.8.29"
     digest: ""
     pullPolicy: IfNotPresent
     pullSecrets: []
@@ -114,6 +114,9 @@ gridgain:
   replicaCount: 3
 
   walMode: "NONE"
+
+  optionLibs: "ignite-kubernetes,ignite-rest-http"
+  jvmOpts: "-Djava.net.preferIPv4Stack=true"
 
   controlCenterAgent:
     enabled: false
