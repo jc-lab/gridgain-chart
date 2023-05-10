@@ -150,8 +150,10 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" $gridgain.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           env:
+            - name: JVM_OPTS
+              value: {{ $gridgain.jvmOpts | quote }}
             - name: OPTION_LIBS
-              value: ignite-kubernetes,ignite-rest-http
+              value: {{ $gridgain.optionLibs | quote }}
             - name: CONFIG_URI
               value: file:///config/node-configuration/node-configuration.xml
             {{- if $gridgain.license.xml }}
@@ -258,6 +260,8 @@ spec:
           {{- if $gridgain.containerSecurityContext.enabled }}
           securityContext: {{- omit $gridgain.containerSecurityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
+          command:
+            - /opt/auto-activate.sh
           env:
             - name: GRIDGAIN_REPLICAS
               value: {{ $replicaCount | quote }}
