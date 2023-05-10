@@ -1,4 +1,4 @@
-{{- $gridgain := .Values.gridgain -}}
+{{- $gridgain := .Values -}}
 {{- $fullName := include "common.names.fullname" . -}}
 apiVersion: v1
 kind: Service

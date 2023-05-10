@@ -19,8 +19,8 @@ If release name contains chart name it will be used as a full name.
 Create a default mongo service name which can be overridden.
 */}}
 {{- define "gridgain.service.nameOverride" -}}
-    {{- if and .Values.gridgain.service .Values.gridgain.service.nameOverride -}}
-        {{- print .Values.gridgain.service.nameOverride -}}
+    {{- if and .Values.service .Values.service.nameOverride -}}
+        {{- print .Values.service.nameOverride -}}
     {{- else -}}
         {{- printf "%s-headless" (include "gridgain.fullname" .) -}}
     {{- end }}
@@ -41,28 +41,28 @@ Create a default mongo arbiter service name which can be overridden.
 Return the proper gridgain&reg; image name
 */}}
 {{- define "gridgain.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.gridgain.image "global" .Values.global) -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
 Return the proper image name (for the init container volume-permissions image)
 */}}
 {{- define "gridgain.volumePermissions.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.gridgain.volumePermissions.image "global" .Values.global) -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.volumePermissions.image "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
 Return the proper image name (for the container auto-activate image)
 */}}
 {{- define "gridgain.auto-activate.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.gridgain.autoActivate.image "global" .Values.global) -}}
+{{- include "common.images.image" (dict "imageRoot" .Values.autoActivate.image "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "gridgain.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.gridgain.image .Values.gridgain.volumePermissions.image) "global" .Values.global) -}}
+{{- include "common.images.pullSecrets" (dict "images" (list .Values.image .Values.volumePermissions.image) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
@@ -83,7 +83,7 @@ Return the proper image name (for the init container volume-permissions image)
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "gridgain.webconsole-backend.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.webConsoleBackend.image .Values.gridgain.volumePermissions.image) "global" .Values.global) -}}
+{{- include "common.images.pullSecrets" (dict "images" (list .Values.webConsoleBackend.image .Values.volumePermissions.image) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
@@ -104,7 +104,7 @@ Return the proper image name (for the init container volume-permissions image)
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "gridgain.webconsole-frontend.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.webConsoleFrontend.image .Values.gridgain.volumePermissions.image) "global" .Values.global) -}}
+{{- include "common.images.pullSecrets" (dict "images" (list .Values.webConsoleFrontend.image .Values.volumePermissions.image) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*
@@ -125,7 +125,7 @@ Return the proper image name (for the init container volume-permissions image)
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "gridgain.web-agent.imagePullSecrets" -}}
-{{- include "common.images.pullSecrets" (dict "images" (list .Values.webAgent.image .Values.gridgain.volumePermissions.image) "global" .Values.global) -}}
+{{- include "common.images.pullSecrets" (dict "images" (list .Values.webAgent.image .Values.volumePermissions.image) "global" .Values.global) -}}
 {{- end -}}
 
 {{/*

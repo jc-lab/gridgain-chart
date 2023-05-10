@@ -1,4 +1,4 @@
-{{- $gridgain := .Values.gridgain }}
+{{- $gridgain := .Values }}
 {{- $replicaCount := int $gridgain.replicaCount }}
 apiVersion: {{ include "common.capabilities.statefulset.apiVersion" . }}
 kind: StatefulSet

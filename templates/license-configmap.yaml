@@ -1,4 +1,4 @@
-{{ if .Values.gridgain.license.xml }}
+{{ if .Values.license.xml }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -14,5 +14,5 @@ metadata:
   {{- end }}
 data:
   gridgain-license.xml: |-
-    {{- .Values.gridgain.license.xml | nindent 4 }}
+    {{- .Values.license.xml | nindent 4 }}
 {{- end }}

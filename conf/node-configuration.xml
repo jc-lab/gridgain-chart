@@ -13,7 +13,7 @@
                         <property name="persistenceEnabled" value="true"/>
                     </bean>
                 </property>
-                <property name="walMode" value="{{ .Values.gridgain.walMode }}"/>
+                <property name="walMode" value="{{ .Values.walMode }}"/>
             </bean>
         </property>
         <property name="discoverySpi">
