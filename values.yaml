@@ -129,7 +129,7 @@ gridgain:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 5
+    initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 10
     failureThreshold: 3
@@ -143,7 +143,7 @@ gridgain:
   ##
   readinessProbe:
     enabled: false
-    initialDelaySeconds: 5
+    initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 10
     failureThreshold: 3
@@ -157,7 +157,7 @@ gridgain:
   ##
   startupProbe:
     enabled: false
-    initialDelaySeconds: foo
+    initialDelaySeconds: 10
     periodSeconds: bar
     timeoutSeconds: foo
     failureThreshold: bar
@@ -516,3 +516,14 @@ gridgain:
   license:
     url: ""
     xml: ""
+
+  autoActivate:
+    enabled: true
+    image:
+      registry: ghcr.io
+      repository: jc-lab/gridgain-helper
+      tag: "0.0.1"
+      digest: ""
+      pullPolicy: IfNotPresent
+      pullSecrets: [ ]
+      debug: false

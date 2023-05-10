@@ -251,6 +251,17 @@ spec:
             {{- if $gridgain.extraVolumeMounts }}
             {{- include "common.tplvalues.render" (dict "value" $gridgain.extraVolumeMounts "context" $) | nindent 12 }}
             {{- end }}
+        {{- if $gridgain.autoActivate.enabled }}
+        - name: auto-activate
+          image: {{ include "gridgain.auto-activate.image" . }}
+          imagePullPolicy: {{ $gridgain.autoActivate.image.pullPolicy | quote }}
+          {{- if $gridgain.containerSecurityContext.enabled }}
+          securityContext: {{- omit $gridgain.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          env:
+            - name: GRIDGAIN_REPLICAS
+              value: {{ $replicaCount | quote }}
+        {{- end }}
         {{- if $gridgain.sidecars }}
         {{- include "common.tplvalues.render" (dict "value" $gridgain.sidecars "context" $) | nindent 8 }}
         {{- end }}
