@@ -2,7 +2,7 @@
 
 set -eu
 
-IS_LAST_POD=$(hostname | grep -E ".-${GRIDGAIN_REPLICAS}$" >/dev/null && echo "y" || echo "n")
+IS_LAST_POD=$(hostname | grep -E ".-$((GRIDGAIN_REPLICAS - 1))$" >/dev/null && echo "y" || echo "n")
 POD_IP=${POD_IP:-127.0.0.1}
 GRIDGAIN_URL=${GRIDGAIN_URL:-http://${POD_IP}:8080}
 
